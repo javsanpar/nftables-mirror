@@ -25,6 +25,7 @@
 static struct nft_ctx *nft;
 
 enum opt_vals {
+	OPT_SCRIPT		= 'b',
 	OPT_HELP		= 'h',
 	OPT_VERSION		= 'v',
 	OPT_CHECK		= 'c',
@@ -44,9 +45,14 @@ enum opt_vals {
 	OPT_NUMERIC_PROTO	= 'p',
 	OPT_INVALID		= '?',
 };
-#define OPTSTRING	"hvcf:iI:jvnsNaeSupyp"
+#define OPTSTRING	"b:hvcf:iI:jvnsNaeSupyp"
 
 static const struct option options[] = {
+	{
+		.name		= "script",
+		.val		= OPT_SCRIPT,
+		.has_arg	= 1,
+	},
 	{
 		.name		= "help",
 		.val		= OPT_HELP,
@@ -186,7 +192,7 @@ static const struct {
 	},
 };
 
-int main(int argc, char * const *argv)
+int main(int argc, char * *argv)
 {
 	char *buf = NULL, *filename = NULL;
 	unsigned int output_flags = 0;
@@ -194,6 +200,9 @@ int main(int argc, char * const *argv)
 	unsigned int debug_mask;
 	unsigned int len;
 	int i, val, rc;
+
+	printf("Press Any Key to Continue\n");  
+	getchar();
 
 	nft = nft_ctx_new(NFT_CTX_DEFAULT);
 
@@ -203,6 +212,24 @@ int main(int argc, char * const *argv)
 			break;
 
 		switch (val) {
+		case OPT_SCRIPT:
+			;
+			filename = argv[2];
+			char *token = strtok(optarg, " ");
+			int i = 2;
+			argv = malloc(sizeof(char*) * 2);
+			while(token) {
+				argv = realloc(argv, sizeof(char*) * (i + 1));
+				argv[i] = token;
+				i++;
+				token = strtok(NULL, " ");
+			}
+			argv = realloc(argv, sizeof(char*) * (i + 1));
+			argv[i] = filename;
+			i++;
+			argv[i] = NULL;
+			argc = i;
+			break;
 		case OPT_HELP:
 			show_help(argv[0]);
 			exit(EXIT_SUCCESS);
@@ -328,6 +355,7 @@ int main(int argc, char * const *argv)
 		exit(EXIT_FAILURE);
 	}
 
+	free(argv);
 	free(buf);
 	nft_ctx_free(nft);
 
